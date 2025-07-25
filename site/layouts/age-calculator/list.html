@@ -1,0 +1,145 @@
+{{ define "main" }}
+
+{{ partial "jumbotron" (dict "imageUrl" "/img/blog-index.jpg" "title" .Title "subtitle" "Calculate your exact age") }}
+
+<div class="mw7 center ph3 pt4">
+  <div class="cf">
+    <div class="w-100 mb4">
+      {{ .Content }}
+    </div>
+    
+    <div class="w-100 mb4">
+      <div class="bg-grey-1 pv4 ph3 br2">
+        <h3 class="f4 b lh-title mb3">Age Calculator</h3>
+        
+        <form id="age-calculator-form" class="cf">
+          <div class="mb3">
+            <label class="f6 b db mb2" for="birth-date">Enter your birth date:</label>
+            <input class="input-reset ba b--black-20 pa2 mb2 db w-100" type="date" id="birth-date" name="birth-date" required>
+          </div>
+          
+          <div class="mb3">
+            <button class="btn w-100 pv2 ph3 bg-primary white bn br2 f6 b ttu tracked pointer hover-bg-dark-blue" type="submit">
+              Calculate Age
+            </button>
+          </div>
+        </form>
+        
+        <div id="age-result" class="mt3 pa3 bg-white br2" style="display: none;">
+          <h4 class="f5 b mb2">Your Age:</h4>
+          <div id="age-display" class="f4 b primary">
+            <!-- Age will be displayed here -->
+          </div>
+          <div id="age-breakdown" class="f6 mt2 mid-gray">
+            <!-- Detailed breakdown will be displayed here -->
+          </div>
+        </div>
+        
+        <div id="error-message" class="mt3 pa3 bg-red white br2" style="display: none;">
+          <p class="ma0">Please enter a valid birth date that is not in the future.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const form = document.getElementById('age-calculator-form');
+  const birthDateInput = document.getElementById('birth-date');
+  const resultDiv = document.getElementById('age-result');
+  const ageDisplayDiv = document.getElementById('age-display');
+  const ageBreakdownDiv = document.getElementById('age-breakdown');
+  const errorDiv = document.getElementById('error-message');
+
+  function calculateAge(birthDate) {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    
+    // Check if birth date is in the future
+    if (birth > today) {
+      return null;
+    }
+    
+    let years = today.getFullYear() - birth.getFullYear();
+    let months = today.getMonth() - birth.getMonth();
+    let days = today.getDate() - birth.getDate();
+    
+    // Adjust for negative days
+    if (days < 0) {
+      months--;
+      const daysInPrevMonth = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+      days += daysInPrevMonth;
+    }
+    
+    // Adjust for negative months
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    
+    // Calculate total days lived
+    const totalDays = Math.floor((today - birth) / (1000 * 60 * 60 * 24));
+    
+    return {
+      years: years,
+      months: months,
+      days: days,
+      totalDays: totalDays
+    };
+  }
+
+  function displayAge(ageData) {
+    const { years, months, days, totalDays } = ageData;
+    
+    // Main age display
+    let ageText = '';
+    if (years > 0) ageText += years + (years === 1 ? ' year' : ' years');
+    if (months > 0) {
+      if (ageText) ageText += ', ';
+      ageText += months + (months === 1 ? ' month' : ' months');
+    }
+    if (days > 0) {
+      if (ageText) ageText += ', ';
+      ageText += days + (days === 1 ? ' day' : ' days');
+    }
+    
+    if (!ageText) ageText = 'Less than a day';
+    
+    ageDisplayDiv.textContent = ageText;
+    
+    // Detailed breakdown
+    const breakdown = [
+      'Total days lived: ' + totalDays.toLocaleString(),
+      'Total hours: ' + (totalDays * 24).toLocaleString(),
+      'Total minutes: ' + (totalDays * 24 * 60).toLocaleString()
+    ];
+    
+    ageBreakdownDiv.innerHTML = breakdown.join('<br>');
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const birthDateValue = birthDateInput.value;
+    if (!birthDateValue) {
+      return;
+    }
+    
+    const ageData = calculateAge(birthDateValue);
+    
+    if (ageData === null) {
+      // Show error
+      resultDiv.style.display = 'none';
+      errorDiv.style.display = 'block';
+    } else {
+      // Show result
+      errorDiv.style.display = 'none';
+      displayAge(ageData);
+      resultDiv.style.display = 'block';
+    }
+  });
+})();
+</script>
+
+{{ end }}
